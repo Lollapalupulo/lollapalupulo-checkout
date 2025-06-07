@@ -49,7 +49,7 @@ async function finalizarCompra(metodo) {
     (itens.masculino * precos.cartao.masculino) + (itens.feminino * precos.cartao.feminino) + (itens.copo * precos.cartao.copo);
 
   try {
-    const response = await fetch('SUA_URL_DO_WEBAPP_AQUI', {
+    const response = await fetch('https://script.google.com/macros/s/AKfycbx7luKIla6rle2q9Egx5r3ktn60PyRKmKJGzkl07mmXWOt8SDfpXS4SbZnDCFYUVwnYTw/exec', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, email, whatsapp, itens, valorTotal, metodo })
