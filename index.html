@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Checkout Lollapalúpulo 2025</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
@@ -95,40 +95,54 @@
         return;
       }
 
-      const valorPix = (masculino * precos.masculino.pix) + (feminino * precos.feminino.pix) + (copo * precos.copo.pix);
-
+      // Enviar dados para Google Sheets (webapp)
       const venda = {
         nome,
         email,
         whatsapp,
         itens: `Masculino: ${masculino}, Feminino: ${feminino}, Copo: ${copo}`,
-        valor: `R$ ${valorPix.toFixed(2).replace('.', ',')}`,
+        valor: `R$ ${(masculino * precos.masculino.pix + feminino * precos.feminino.pix + copo * precos.copo.pix).toFixed(2).replace('.', ',')}`,
         status_pagamento: 'Pendente',
         id_transacao: ''
       };
 
       try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbwDSZ8-W1MdpyRev59yxcrQuM02b54lpyZa_w00F49GV6qxy3H4yB_Pi5h7XkQx6UE_LA/exec', {
+        const responseSheet = await fetch('https://script.google.com/macros/s/AKfycbwDSZ8-W1MdpyRev59yxcrQuM02b54lpyZa_w00F49GV6qxy3H4yB_Pi5h7XkQx6UE_LA/exec', {
           method: 'POST',
           body: JSON.stringify(venda),
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const dataSheet = await responseSheet.json();
+
+        if (!dataSheet.success) {
+          alert('Erro ao registrar venda. Tente novamente.');
+          return;
+        }
+
+        // Criar preferência Mercado Pago via seu backend no Vercel
+        const responseMp = await fetch('https://lollapalupulo-checkout.vercel.app/api/create_preference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: { masculino, feminino, copo }
+          })
         });
 
-        const data = await response.json();
+        const dataMp = await responseMp.json();
 
-        if (data.success) {
-          alert('Venda registrada! Agora você será redirecionado para o pagamento.');
-          // Aqui entra a lógica para abrir o checkout Mercado Pago (próximo passo)
+        if (dataMp.init_point) {
+          window.location.href = dataMp.init_point;
         } else {
-          alert('Erro ao registrar venda. Tente novamente.');
+          alert('Erro ao iniciar pagamento Mercado Pago.');
         }
+
       } catch (error) {
         alert('Erro na comunicação com o servidor. Tente novamente.');
         console.error(error);
       }
     });
+
+    atualizarTotais(); // atualiza os totais na carga inicial
   </script>
 </body>
 </html>
