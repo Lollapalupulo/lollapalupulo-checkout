@@ -1,148 +1,59 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout Lollapalúpulo 2025</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; }
+    .checkout-container { max-width: 600px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .btn-pix { background-color: #32bbad; color: white; }
+    .btn-cartao { background-color: #009ee3; color: white; }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
-  <div class="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-xl mt-10">
-    <h1 class="text-2xl font-bold text-center mb-6">Checkout - Lollapalúpulo 2025</h1>
-
-    <form id="checkoutForm" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium">Nome completo</label>
-        <input type="text" name="nome" required class="w-full border rounded px-3 py-2" />
+<body>
+  <div class="container checkout-container">
+    <h2 class="text-center mb-4">Ingressos Lollapalúpulo 2025</h2>
+    <form id="checkout-form">
+      <div class="mb-3">
+        <label for="nome" class="form-label">Nome Completo</label>
+        <input type="text" class="form-control" id="nome" required>
       </div>
-      <div>
-        <label class="block text-sm font-medium">E-mail</label>
-        <input type="email" name="email" required class="w-full border rounded px-3 py-2" />
+      <div class="mb-3">
+        <label for="email" class="form-label">E-mail</label>
+        <input type="email" class="form-control" id="email" required>
       </div>
-      <div>
-        <label class="block text-sm font-medium">WhatsApp</label>
-        <input type="text" name="whatsapp" required class="w-full border rounded px-3 py-2" />
+      <div class="mb-3">
+        <label for="whatsapp" class="form-label">WhatsApp</label>
+        <input type="tel" class="form-control" id="whatsapp" required>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block font-semibold">Ingresso Masculino</label>
-          <input type="number" name="masculino" value="0" min="0" class="w-full border rounded px-2 py-1" />
-        </div>
-        <div>
-          <label class="block font-semibold">Ingresso Feminino</label>
-          <input type="number" name="feminino" value="0" min="0" class="w-full border rounded px-2 py-1" />
-        </div>
-        <div>
-          <label class="block font-semibold">Copo 2025</label>
-          <input type="number" name="copo" value="0" min="0" class="w-full border rounded px-2 py-1" />
-        </div>
+      
+      <h5 class="mt-4">Ingressos</h5>
+      <div class="mb-3">
+        <label class="form-label">Ingresso Masculino (R$ 157 PIX / R$ 162 Cartão)</label>
+        <input type="number" class="form-control" id="ingresso-masculino" min="0" value="0">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Ingresso Feminino (R$ 137 PIX / R$ 142 Cartão)</label>
+        <input type="number" class="form-control" id="ingresso-feminino" min="0" value="0">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Copo Personalizado (R$ 10.50 PIX / R$ 11 Cartão)</label>
+        <input type="number" class="form-control" id="copo" min="0" value="0">
       </div>
 
-      <div class="mt-6">
-        <p class="font-bold">Resumo de pagamento:</p>
-        <div class="mt-2 text-sm">
-          <p id="resumoPix">Total via PIX: R$ 0,00</p>
-          <p id="resumoCartao">Total via Cartão: R$ 0,00</p>
-        </div>
+      <div class="mt-4">
+        <h5>Total: <span id="total-pix">R$ 0.00</span> (PIX) ou <span id="total-cartao">R$ 0.00</span> (Cartão)</h5>
       </div>
 
-      <div class="mt-6">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Continuar para Pagamento
-        </button>
+      <div class="d-grid gap-2 mt-4">
+        <button type="button" class="btn btn-pix" onclick="finalizarCompra('pix')">Pagar com PIX</button>
+        <button type="button" class="btn btn-cartao" onclick="finalizarCompra('cartao')">Pagar com Cartão</button>
       </div>
     </form>
   </div>
 
-  <script>
-    const form = document.getElementById('checkoutForm');
-    const resumoPix = document.getElementById('resumoPix');
-    const resumoCartao = document.getElementById('resumoCartao');
-
-    const precos = {
-      masculino: { pix: 157, cartao: 162 },
-      feminino: { pix: 137, cartao: 142 },
-      copo: { pix: 10.5, cartao: 11 }
-    };
-
-    form.addEventListener('input', atualizarTotais);
-
-    function atualizarTotais() {
-      const masculino = parseInt(form.masculino.value || 0);
-      const feminino = parseInt(form.feminino.value || 0);
-      const copo = parseInt(form.copo.value || 0);
-
-      const totalPix = (masculino * precos.masculino.pix) + (feminino * precos.feminino.pix) + (copo * precos.copo.pix);
-      const totalCartao = (masculino * precos.masculino.cartao) + (feminino * precos.feminino.cartao) + (copo * precos.copo.cartao);
-
-      resumoPix.textContent = `Total via PIX: R$ ${totalPix.toFixed(2).replace('.', ',')}`;
-      resumoCartao.textContent = `Total via Cartão: R$ ${totalCartao.toFixed(2).replace('.', ',')}`;
-    }
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const nome = form.nome.value.trim();
-      const email = form.email.value.trim();
-      const whatsapp = form.whatsapp.value.trim();
-      const masculino = parseInt(form.masculino.value) || 0;
-      const feminino = parseInt(form.feminino.value) || 0;
-      const copo = parseInt(form.copo.value) || 0;
-
-      if (masculino + feminino + copo === 0) {
-        alert('Por favor, selecione ao menos um produto.');
-        return;
-      }
-
-      // Enviar dados para Google Sheets (webapp)
-      const venda = {
-        nome,
-        email,
-        whatsapp,
-        itens: `Masculino: ${masculino}, Feminino: ${feminino}, Copo: ${copo}`,
-        valor: `R$ ${(masculino * precos.masculino.pix + feminino * precos.feminino.pix + copo * precos.copo.pix).toFixed(2).replace('.', ',')}`,
-        status_pagamento: 'Pendente',
-        id_transacao: ''
-      };
-
-      try {
-        const responseSheet = await fetch('https://script.google.com/macros/s/AKfycbwDSZ8-W1MdpyRev59yxcrQuM02b54lpyZa_w00F49GV6qxy3H4yB_Pi5h7XkQx6UE_LA/exec', {
-          method: 'POST',
-          body: JSON.stringify(venda),
-          headers: { 'Content-Type': 'application/json' }
-        });
-        const dataSheet = await responseSheet.json();
-
-        if (!dataSheet.success) {
-          alert('Erro ao registrar venda. Tente novamente.');
-          return;
-        }
-
-        // Criar preferência Mercado Pago via seu backend no Vercel
-        const responseMp = await fetch('https://lollapalupulo-checkout.vercel.app/api/create_preference', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items: { masculino, feminino, copo }
-          })
-        });
-
-        const dataMp = await responseMp.json();
-
-        if (dataMp.init_point) {
-          window.location.href = dataMp.init_point;
-        } else {
-          alert('Erro ao iniciar pagamento Mercado Pago.');
-        }
-
-      } catch (error) {
-        alert('Erro na comunicação com o servidor. Tente novamente.');
-        console.error(error);
-      }
-    });
-
-    atualizarTotais(); // atualiza os totais na carga inicial
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
