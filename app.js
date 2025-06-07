@@ -1,73 +1,110 @@
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyne_J2LRfVVDb9TA9nxpCJ9uFpMtlkHhA2F2NHd5bbREscIg9O8p0X18tZomaWCJR35A/exec?cors';
-
-// Preços
-const precos = {
+// Configurações
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyne_J2LRfVVDb9TA9nxpCJ9uFpMtlkHhA2F2NHd5bbREscIg9O8p0X18tZomaWCJR35A/exec';
+const PRECOS = {
   pix: { masculino: 157, feminino: 137, copo: 10.5 },
   cartao: { masculino: 162, feminino: 142, copo: 11 }
 };
 
-// Atualiza totais quando muda quantidade
-document.querySelectorAll('input[type="number"]').forEach(input => {
-  input.addEventListener('change', atualizarTotais);
+// Inicialização - Atualiza totais ao carregar
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('change', atualizarTotais);
+  });
+  atualizarTotais(); // Calcula valores iniciais
 });
 
+// Atualiza totais quando quantidades mudam
 function atualizarTotais() {
-  const masculino = parseInt(document.getElementById('ingresso-masculino').value) || 0;
-  const feminino = parseInt(document.getElementById('ingresso-feminino').value) || 0;
-  const copo = parseInt(document.getElementById('copo').value) || 0;
+  const getValue = (id) => parseInt(document.getElementById(id).value) || 0;
+  
+  const masculino = getValue('ingresso-masculino');
+  const feminino = getValue('ingresso-feminino');
+  const copo = getValue('copo');
 
-  const totalPix = (masculino * precos.pix.masculino) + (feminino * precos.pix.feminino) + (copo * precos.pix.copo);
-  const totalCartao = (masculino * precos.cartao.masculino) + (feminino * precos.cartao.feminino) + (copo * precos.cartao.copo);
+  document.getElementById('total-pix').textContent = `R$ ${(
+    masculino * PRECOS.pix.masculino + 
+    feminino * PRECOS.pix.feminino + 
+    copo * PRECOS.pix.copo
+  ).toFixed(2)}`;
 
-  document.getElementById('total-pix').textContent = `R$ ${totalPix.toFixed(2)}`;
-  document.getElementById('total-cartao').textContent = `R$ ${totalCartao.toFixed(2)}`;
+  document.getElementById('total-cartao').textContent = `R$ ${(
+    masculino * PRECOS.cartao.masculino + 
+    feminino * PRECOS.cartao.feminino + 
+    copo * PRECOS.cartao.copo
+  ).toFixed(2)}`;
 }
 
+// Processa o pagamento
 async function finalizarCompra(metodo) {
-  const nome = document.getElementById('nome').value;
-  const email = document.getElementById('email').value;
-  const whatsapp = document.getElementById('whatsapp').value;
-  const itens = {
-    masculino: parseInt(document.getElementById('ingresso-masculino').value) || 0,
-    feminino: parseInt(document.getElementById('ingresso-feminino').value) || 0,
-    copo: parseInt(document.getElementById('copo').value) || 0
+  // Coleta dados
+  const getValue = (id) => document.getElementById(id).value.trim();
+  const dados = {
+    nome: getValue('nome'),
+    email: getValue('email'),
+    whatsapp: getValue('whatsapp'),
+    itens: {
+      masculino: parseInt(getValue('ingresso-masculino')) || 0,
+      feminino: parseInt(getValue('ingresso-feminino')) || 0,
+      copo: parseInt(getValue('copo')) || 0
+    }
   };
 
   // Validação
-  if (!nome || !email || !whatsapp) {
-    alert("Preencha todos os campos obrigatórios!");
+  if (!dados.nome || !dados.email || !dados.whatsapp) {
+    alert('Preencha todos os campos obrigatórios!');
     return;
   }
 
   // Calcula total
-  const valorTotal = metodo === 'pix' ? 
-    (itens.masculino * precos.pix.masculino) + (itens.feminino * precos.pix.feminino) + (itens.copo * precos.pix.copo) :
-    (itens.masculino * precos.cartao.masculino) + (itens.feminino * precos.cartao.feminino) + (itens.copo * precos.cartao.copo);
+  dados.valorTotal = metodo === 'pix' 
+    ? dados.itens.masculino * PRECOS.pix.masculino + 
+      dados.itens.feminino * PRECOS.pix.feminino + 
+      dados.itens.copo * PRECOS.pix.copo
+    : dados.itens.masculino * PRECOS.cartao.masculino + 
+      dados.itens.feminino * PRECOS.cartao.feminino + 
+      dados.itens.copo * PRECOS.cartao.copo;
 
   try {
+    // 1. Verifica CORS primeiro
+    await checkCORS();
+    
+    // 2. Envia dados
     const response = await fetch(WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        nome, 
-        email, 
-        whatsapp, 
-        itens, 
-        valorTotal, 
-        metodo 
-      })
+      body: JSON.stringify({ ...dados, metodo })
     });
 
-    const data = await response.json();
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
-    if (!data.success) {
-      throw new Error(data.error || 'Erro ao processar pagamento');
+    const resultado = await response.json();
+    
+    if (!resultado.success) {
+      throw new Error(resultado.error || 'Erro no processamento');
     }
-    
-    window.location.href = data.payment_link;
+
+    // Redireciona para o pagamento
+    window.location.href = resultado.payment_link;
 
   } catch (error) {
     console.error('Erro no checkout:', error);
-    alert(`Falha: ${error.message}. Verifique o console (F12) para detalhes.`);
+    alert(`Falha: ${error.message}\n\nVerifique o console (F12) para detalhes.`);
+  }
+}
+
+// Verifica se CORS está habilitado
+async function checkCORS() {
+  try {
+    const testeCors = await fetch(WEBAPP_URL, { 
+      method: 'OPTIONS',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!testeCors.ok) {
+      throw new Error('Servidor não responde a OPTIONS');
+    }
+  } catch (error) {
+    console.error('Teste CORS falhou:', error);
+    throw new Error('Problema de comunicação com o servidor. Tente novamente mais tarde.');
   }
 }
