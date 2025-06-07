@@ -1,64 +1,34 @@
-// Configurações
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyne_J2LRfVVDb9TA9nxpCJ9uFpMtlkHhA2F2NHd5bbREscIg9O8p0X18tZomaWCJR35A/exec'; // <<< SUBSTITUA AQUI!
-
-// Preços
-const precos = {
-  pix: { masculino: 157, feminino: 137, copo: 10.5 },
-  cartao: { masculino: 162, feminino: 142, copo: 11 }
-};
-
-document.querySelectorAll('input[type="number"]').forEach(input => {
-  input.addEventListener('change', atualizarTotais);
-});
-
-function atualizarTotais() {
-  const masculino = parseInt(document.getElementById('ingresso-masculino').value) || 0;
-  const feminino = parseInt(document.getElementById('ingresso-feminino').value) || 0;
-  const copo = parseInt(document.getElementById('copo').value) || 0;
-
-  const totalPix = (masculino * precos.pix.masculino) + (feminino * precos.pix.feminino) + (copo * precos.pix.copo);
-  const totalCartao = (masculino * precos.cartao.masculino) + (feminino * precos.cartao.feminino) + (copo * precos.cartao.copo);
-
-  document.getElementById('total-pix').textContent = `R$ ${totalPix.toFixed(2)}`;
-  document.getElementById('total-cartao').textContent = `R$ ${totalCartao.toFixed(2)}`;
-}
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxIQvOyjHD6aLQXmXt-GM_knTtP1n5bldUqGCqbbua2Iz-mL80uQ0M9FAH-qGnkW5R6og/exec';
 
 async function finalizarCompra(metodo) {
-  const nome = document.getElementById('nome').value;
-  const email = document.getElementById('email').value;
-  const whatsapp = document.getElementById('whatsapp').value;
-  const itens = {
-    masculino: parseInt(document.getElementById('ingresso-masculino').value) || 0,
-    feminino: parseInt(document.getElementById('ingresso-feminino').value) || 0,
-    copo: parseInt(document.getElementById('copo').value) || 0
-  };
-
-  if (!nome || !email || !whatsapp) {
-    alert("Preencha todos os campos obrigatórios!");
-    return;
-  }
-
-  const valorTotal = metodo === 'pix' ? 
-    (itens.masculino * precos.pix.masculino) + (itens.feminino * precos.pix.feminino) + (itens.copo * precos.pix.copo) :
-    (itens.masculino * precos.cartao.masculino) + (itens.feminino * precos.cartao.feminino) + (itens.copo * precos.cartao.copo);
+  // ... (código anterior de validação dos campos)
 
   try {
     const response = await fetch(WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, whatsapp, itens, valorTotal, metodo })
+      body: JSON.stringify({ 
+        nome: document.getElementById('nome').value,
+        email: document.getElementById('email').value,
+        whatsapp: document.getElementById('whatsapp').value,
+        itens: {
+          masculino: parseInt(document.getElementById('ingresso-masculino').value) || 0,
+          feminino: parseInt(document.getElementById('ingresso-feminino').value) || 0,
+          copo: parseInt(document.getElementById('copo').value) || 0
+        },
+        valorTotal: metodo === 'pix' ? 
+          (masculino * 157 + feminino * 137 + copo * 10.5) : 
+          (masculino * 162 + feminino * 142 + copo * 11),
+        metodo: metodo
+      })
     });
 
     const data = await response.json();
-    console.log("Resposta do WebApp:", data); // Debug
-    
-    if (data.error) throw new Error(data.error);
-    if (!data.payment_link) throw new Error("Link de pagamento não gerado.");
-    
+    if (!data.success) throw new Error(data.error || 'Erro desconhecido');
     window.location.href = data.payment_link;
 
   } catch (error) {
-    console.error("Erro detalhado:", error);
-    alert(`Erro: ${error.message}. Verifique o console (F12 > Console).`);
+    console.error('Erro no frontend:', error);
+    alert(`Falha: ${error.message}. Verifique o console (F12) para detalhes.`);
   }
 }
