@@ -1,18 +1,12 @@
+// Configurações
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyne_J2LRfVVDb9TA9nxpCJ9uFpMtlkHhA2F2NHd5bbREscIg9O8p0X18tZomaWCJR35A/exec'; // <<< SUBSTITUA AQUI!
+
 // Preços
 const precos = {
-  pix: {
-    masculino: 157,
-    feminino: 137,
-    copo: 10.5
-  },
-  cartao: {
-    masculino: 162,
-    feminino: 142,
-    copo: 11
-  }
+  pix: { masculino: 157, feminino: 137, copo: 10.5 },
+  cartao: { masculino: 162, feminino: 142, copo: 11 }
 };
 
-// Atualizar totais quando alterar quantidades
 document.querySelectorAll('input[type="number"]').forEach(input => {
   input.addEventListener('change', atualizarTotais);
 });
@@ -49,18 +43,22 @@ async function finalizarCompra(metodo) {
     (itens.masculino * precos.cartao.masculino) + (itens.feminino * precos.cartao.feminino) + (itens.copo * precos.cartao.copo);
 
   try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbx7luKIla6rle2q9Egx5r3ktn60PyRKmKJGzkl07mmXWOt8SDfpXS4SbZnDCFYUVwnYTw/exec', {
+    const response = await fetch(WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, email, whatsapp, itens, valorTotal, metodo })
     });
 
     const data = await response.json();
-    if (data.payment_link) {
-      window.location.href = data.payment_link; // Redireciona para o Mercado Pago
-    }
+    console.log("Resposta do WebApp:", data); // Debug
+    
+    if (data.error) throw new Error(data.error);
+    if (!data.payment_link) throw new Error("Link de pagamento não gerado.");
+    
+    window.location.href = data.payment_link;
+
   } catch (error) {
-    alert("Erro ao processar pagamento. Tente novamente!");
-    console.error(error);
+    console.error("Erro detalhado:", error);
+    alert(`Erro: ${error.message}. Verifique o console (F12 > Console).`);
   }
 }
