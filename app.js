@@ -1,4 +1,4 @@
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxIQvOyjHD6aLQXmXt-GM_knTtP1n5bldUqGCqbbua2Iz-mL80uQ0M9FAH-qGnkW5R6og/exec';
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxIQvOyjHD6aLQXmXt-GM_knTtP1n5bldUqGCqbbua2Iz-mL80uQ0M9FAH-qGnkW5R6og/exec?cors';
 
 async function finalizarCompra(metodo) {
   // ... (código anterior de validação dos campos)
